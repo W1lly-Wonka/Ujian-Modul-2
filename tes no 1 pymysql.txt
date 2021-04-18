@@ -1,0 +1,40 @@
+use hotwheels;
+
+select * from customers;
+select * from employees;
+select * from offices;
+select * from orderdetails;
+select * from orders;
+select * from payments;
+select * from productlines;
+select * from products;
+
+-- Tampilkan jumlah total customer yang Anda layani, beserta jumlah total kota & negara asal customer-customer Anda. 
+-- Customers, Cities, Countries
+select count(customerNumber) as Customers, count(distinct city) as Cities, count(distinct country) as Countries from customers;
+-- Tampilkan resources yang Anda miliki, mulai dari jumlah karyawan, jumlah kantor & lokasi negaranya, jumlah barang yang dijual, total stok barang & jumlah vendor yang menjadi partner Anda. 
+select count(employeeNumber) as Employees, count(distinct officeCode) as Offices, count(distinct country) as Country,
+(select count(productCode) from products) as Products, (select sum(quantityInStock) from products) as StockProducts, (select count(distinct productVendor) from products) as Vendors
+from employees join offices using (officeCode);
+-- Dari soal nomor 2, Anda mengetahui anda memiliki 23 karyawan. Tampilkan jumlah karyawan yang bekerja di tiap-tiap kantor Anda yang tersebar di beberapa negara.
+select o.city, count(e.employeeNumber) from offices o join employees e on o.officeCode = e.officeCode group by city;
+-- Dari soal nomor 2 tercatat Anda memiliki 110 model die cast dengan total stok 555,131 items. Jika dikategorikan, produk yang Anda jual terbagi menjadi 7 product line die cast, yakni model mobil klasik, mobil vintage, sepeda motor, pesawat terbang, kapal laut, kereta api serta truk & bus. 
+-- Rumuskan single query yang dapat menampilkan harga produk terendah & tertinggi untuk masing-masing kategori. 
+select productline, sum(quantityInStock) as quantityInStock , min(buyPrice) as minPrice, max(buyPrice) as maxPrice from products join productlines using (productLine) group by productLine;
+-- Tampilkan daftar 10 customer paling royal (paling banyak mendatangkan uang bagi kita), yang total nominal transaksinya paling tinggi. 
+-- Data yang ditampilkan adalah nama customer, kota & negara asal, beserta total uang yang dihabiskan di produk kita. 
+select c.customerName, c.city, c.country, sum(od.quantityOrdered*od.priceEach) as totalSpending
+from customers c join orders o on c.customerNumber = o.customerNumber
+join orderdetails od on o.orderNumber = od.orderNumber
+group by c.customerName, c.city, c.country
+order by totalSpending desc 
+limit 10;
+
+select customers.customerName as customerName, products.productName as productName, orderdetails.quantityOrdered as quantityOrdered, orderdetails.priceEach as priceEach, orderdetails.quantityOrdered*orderdetails.priceEach as totalPrice
+from customers, products, orderdetails, orders, payments
+where customers.customerNumber = payments.customerNumber
+and customers.customerNumber = orders.customerNumber
+and orders.orderNumber = orderdetails.orderNumber
+and orderdetails.productCode = products.productCode
+and payments.paymentDate = '2003-06-05'
+and orders.orderDate < '2003-06-05';
